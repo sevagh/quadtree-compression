@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -13,5 +12,7 @@ func TestCreateQuadTreeFromPng(t *testing.T) {
 		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
 	}
 
-	fmt.Printf("%+v\n", qt)
+	if qt == nil {
+		t.Errorf("Expected a non-nil quad tree")
+	}
 }
