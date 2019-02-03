@@ -6,26 +6,22 @@ import (
 	colorlib "image/color"
 )
 
-const (
-	NE = iota
-	NW
-	SW
-	SE
-)
-
-type quadTreeNode struct {
-	children [4]*quadTreeNode //indexed with the cardinal direction iota
-	color    colorlib.Color
+type QuadTreeNode struct {
+	NW    *QuadTreeNode
+	NE    *QuadTreeNode
+	SE    *QuadTreeNode
+	SW    *QuadTreeNode
+	Color colorlib.Color
 }
 
 type QuadTree struct {
-	root   *quadTreeNode
-	height int
-	width  int
+	Root   *QuadTreeNode
+	Height int
+	Width  int
 }
 
-func newQuadTreeNode(color colorlib.Color) quadTreeNode {
-	return quadTreeNode{color: color, children: [4]*quadTreeNode{nil, nil, nil, nil}}
+func NewQuadTreeNode(color colorlib.Color) QuadTreeNode {
+	return QuadTreeNode{Color: color}
 }
 
 func BuildQuadTree(imageSource string) (*QuadTree, error) {
@@ -36,19 +32,15 @@ func BuildQuadTree(imageSource string) (*QuadTree, error) {
 
 	qt := QuadTree{}
 
-	qt.width = (*img).Bounds().Max.X - 1 - (*img).Bounds().Min.X
-	qt.height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
+	qt.Width = (*img).Bounds().Max.X - 1 - (*img).Bounds().Min.X
+	qt.Height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
 
-	qt.root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.width, qt.height)
+	qt.Root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.Width, qt.Height)
 
 	return &qt, nil
 }
 
-func buildQuadTree(img *image.Image, x, y, w, h int) *quadTreeNode {
-	//if w == 0 && h == 0 {
-	//	fmt.Printf("YOU THE MOTHERFUCKER\n")
-	//	return nil
-	//}
+func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 	if w == 0 {
 		w = 1
 	}
@@ -57,38 +49,79 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *quadTreeNode {
 	}
 
 	if w == 1 && h == 1 {
-		qn := newQuadTreeNode((*img).At(x, y))
+		qn := NewQuadTreeNode((*img).At(x, y))
 		return &qn
 	}
 
-	qn := quadTreeNode{}
+	qn := QuadTreeNode{}
 
-	qn.children[NW] = buildQuadTree(img, x, y, w/2, h/2)
-	qn.children[NE] = buildQuadTree(img, x+(w/2), y, w/2, h/2)
-	qn.children[SW] = buildQuadTree(img, x, y+(h/2), w/2, h/2)
-	qn.children[SE] = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
+	qn.NW = buildQuadTree(img, x, y, w/2, h/2)
+	qn.NE = buildQuadTree(img, x+(w/2), y, w/2, h/2)
+	qn.SW = buildQuadTree(img, x, y+(h/2), w/2, h/2)
+	qn.SE = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
 
-	if qn.children[NE] != nil && qn.children[NW] != nil && qn.children[SW] != nil && qn.children[SE] != nil {
+	if qn.NE != nil && qn.NW != nil && qn.SW != nil && qn.SE != nil {
 		var red uint32
 		var green uint32
 		var blue uint32
 		var alpha uint32
 
-		for i := 0; i < 4; i++ {
-			red_, green_, blue_, alpha_ := qn.children[i].color.RGBA()
-			red += red_
-			green += green_
-			blue += blue_
-			alpha += alpha_
-		}
+		red_, green_, blue_, alpha_ := qn.NW.Color.RGBA()
+
+		red += red_
+		green += green_
+		blue += blue_
+		alpha += alpha_
+
+		red_, green_, blue_, alpha_ = qn.NE.Color.RGBA()
+
+		red += red_
+		green += green_
+		blue += blue_
+		alpha += alpha_
+
+		red_, green_, blue_, alpha_ = qn.SE.Color.RGBA()
+
+		red += red_
+		green += green_
+		blue += blue_
+		alpha += alpha_
+
+		red_, green_, blue_, alpha_ = qn.SW.Color.RGBA()
+
+		red += red_
+		green += green_
+		blue += blue_
+		alpha += alpha_
 
 		red /= 4
 		green /= 4
 		blue /= 4
 		alpha /= 4
 
-		qn.color = colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)}
+		qn.Color = colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)}
 	}
 
 	return &qn
+}
+
+func (q *QuadTree) Depth() int {
+	return q.Root.depth(0)
+}
+
+func (q *QuadTreeNode) depth(initialDepth int) int {
+	initialDepth++
+	if q.NE != nil {
+		initialDepth += q.NE.depth(initialDepth)
+	}
+	if q.NW != nil {
+		initialDepth += q.NW.depth(initialDepth)
+	}
+	if q.SE != nil {
+		initialDepth += q.SE.depth(initialDepth)
+	}
+	if q.SW != nil {
+		initialDepth += q.SE.depth(initialDepth)
+	}
+	return initialDepth
 }
