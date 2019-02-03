@@ -1,19 +1,19 @@
 package main
 
-func (q *QuadTree) TreeToSlice() []int64 {
-	treeArrRep := make([]int64, q.Leaves()+2)
+func (q *QuadTree) TreeToSlice() []uint64 {
+	treeArrRep := make([]uint64, q.Leaves()+2)
 
-	treeArrRep[0] = int64(q.Root.Color) //root = index 0
+	treeArrRep[0] = uint64(q.Root.Color) //root = index 0
 
 	DFS(q.Root, 0, &treeArrRep)
 
-	treeArrRep[len(treeArrRep)-2] = int64(q.Width)
-	treeArrRep[len(treeArrRep)-1] = int64(q.Height)
+	treeArrRep[len(treeArrRep)-2] = uint64(q.Width)
+	treeArrRep[len(treeArrRep)-1] = uint64(q.Height)
 
 	return treeArrRep
 }
 
-func SliceToTree(nodes *[]int64) QuadTree {
+func SliceToTree(nodes *[]uint64) QuadTree {
 	qt := QuadTree{}
 
 	qt.Height = int((*nodes)[len(*nodes)-1])
@@ -28,7 +28,7 @@ func SliceToTree(nodes *[]int64) QuadTree {
 	return qt
 }
 
-func InvDFS(q *QuadTreeNode, index int, storage *[]int64) {
+func InvDFS(q *QuadTreeNode, index int, storage *[]uint64) {
 	// no more nodes - use 4*index+3 to omit height/width at the end
 	if 4*index+3 >= len(*storage) {
 		return
@@ -56,18 +56,18 @@ func InvDFS(q *QuadTreeNode, index int, storage *[]int64) {
 // NW: 4*i + 2
 // SE: 4*i + 3
 // SW: 4*i + 4
-func DFS(q *QuadTreeNode, index int, storage *[]int64) {
+func DFS(q *QuadTreeNode, index int, storage *[]uint64) {
 	if q.NE != nil { //not a leaf node
-		(*storage)[4*index+1] = int64(q.NE.Color)
+		(*storage)[4*index+1] = uint64(q.NE.Color)
 		DFS(q.NE, 4*index+1, storage)
 
-		(*storage)[4*index+2] = int64(q.NW.Color)
+		(*storage)[4*index+2] = uint64(q.NW.Color)
 		DFS(q.NW, 4*index+2, storage)
 
-		(*storage)[4*index+3] = int64(q.SE.Color)
+		(*storage)[4*index+3] = uint64(q.SE.Color)
 		DFS(q.SE, 4*index+3, storage)
 
-		(*storage)[4*index+4] = int64(q.SW.Color)
+		(*storage)[4*index+4] = uint64(q.SW.Color)
 		DFS(q.SW, 4*index+4, storage)
 	}
 }
