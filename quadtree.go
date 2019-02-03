@@ -51,8 +51,8 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *quadTreeNode {
 
 	qn := quadTreeNode{}
 
-	qn.children[NE] = buildQuadTree(img, x+(w/2), y, w/2, h/2)
 	qn.children[NW] = buildQuadTree(img, x, y, w/2, h/2)
+	qn.children[NE] = buildQuadTree(img, x+(w/2), y, w/2, h/2)
 	qn.children[SW] = buildQuadTree(img, x, y+(h/2), w/2, h/2)
 	qn.children[SE] = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
 
