@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"fmt"
 	"image"
 	colorlib "image/color"
 )
@@ -44,6 +45,17 @@ func BuildQuadTree(imageSource string) (*QuadTree, error) {
 }
 
 func buildQuadTree(img *image.Image, x, y, w, h int) *quadTreeNode {
+	//if w == 0 && h == 0 {
+	//	fmt.Printf("YOU THE MOTHERFUCKER\n")
+	//	return nil
+	//}
+	if w == 0 {
+		w = 1
+	}
+	if h == 0 {
+		h = 1
+	}
+
 	if w == 1 && h == 1 {
 		qn := newQuadTreeNode((*img).At(x, y))
 		return &qn

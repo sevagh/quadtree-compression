@@ -62,8 +62,8 @@ func TestCompressModifiesQuadTreeObject(t *testing.T) {
 	}
 }
 
-func TestCompressQuadTree(t *testing.T) {
-	path := "./samples/jungle.jpg"
+func TestCompressImageQuadTree(t *testing.T) {
+	path := "./samples/batman.png"
 	regularOut := "./normal_out.png"
 	compressedPath := "./compressed_out.png"
 

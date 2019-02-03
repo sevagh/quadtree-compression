@@ -25,11 +25,11 @@ func (q *quadTreeNode) prune(tolerance float64) {
 // stack recursion - essentially a DFS of sorts
 func (q *quadTreeNode) canPrune(parent *quadTreeNode, tolerance float64) bool {
 	if q.children[NE] == nil || q.children[NW] == nil || q.children[SE] == nil || q.children[SW] == nil { // leaf node
-		colorDist := CIE76(parent.color, q.color)
-		//colorDist := EuclidianDistance(parent.color, q.color)
+		//colorDist := CIE76(parent.color, q.color)
+		colorDist := EuclidianDistance(parent.color, q.color)
 
 		// can prune if the LAB CIE76 is under the Just Noticeable Difference threshold
-		return colorDist <= 2.3*10
+		return colorDist <= tolerance
 	}
 
 	return q.children[NE].canPrune(parent, tolerance) && q.children[NW].canPrune(parent, tolerance) && q.children[SE].canPrune(parent, tolerance) && q.children[SW].canPrune(parent, tolerance)
