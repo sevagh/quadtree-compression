@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"fmt"
 	"image"
 	colorlib "image/color"
 )
@@ -36,6 +35,8 @@ func BuildQuadTree(imageSource string) (*QuadTree, error) {
 	qt.Height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
 
 	qt.Root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.Width, qt.Height)
+
+	qt.Prune()
 
 	return &qt, nil
 }
@@ -105,23 +106,17 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 	return &qn
 }
 
-func (q *QuadTree) Depth() int {
-	return q.Root.depth(0)
+func (q *QuadTree) Leaves() int {
+	return q.Root.leaves()
 }
 
-func (q *QuadTreeNode) depth(initialDepth int) int {
-	initialDepth++
-	if q.NE != nil {
-		initialDepth += q.NE.depth(initialDepth)
+func (q *QuadTreeNode) leaves() int {
+	leaves := 1
+	if q.NE != nil { //not a leaf node
+		leaves += q.NE.leaves()
+		leaves += q.NW.leaves()
+		leaves += q.SE.leaves()
+		leaves += q.SE.leaves()
 	}
-	if q.NW != nil {
-		initialDepth += q.NW.depth(initialDepth)
-	}
-	if q.SE != nil {
-		initialDepth += q.SE.depth(initialDepth)
-	}
-	if q.SW != nil {
-		initialDepth += q.SE.depth(initialDepth)
-	}
-	return initialDepth
+	return leaves
 }

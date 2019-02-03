@@ -5,7 +5,6 @@ import (
 )
 
 func main() {
-	qt := QuadTree{}
+	qt, _ := BuildQuadTree("./samples/jungle.jpg")
 	fmt.Printf("%+v\n", qt)
-	fmt.Println("Hello world")
 }
