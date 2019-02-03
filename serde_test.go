@@ -1,6 +1,7 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -21,6 +22,18 @@ func TestSerDeQuadTree(t *testing.T) {
 	qt2, err := LoadQuadTreeFromFile(outPathQuadTree)
 	if err != nil {
 		t.Fatalf("Error when deserializing quadtree from file '%s': %+v", outPathQuadTree, err)
+	}
+
+	qtSlice := qt.TreeToSlice()
+	qt2Slice := qt2.TreeToSlice()
+
+	t.Logf("leaf count: %+v\n", qt.Leaves())
+	t.Logf("array count: %+v\n", len(qtSlice))
+	t.Logf("leaf2 count: %+v\n", qt2.Leaves())
+	t.Logf("array2 count: %+v\n", len(qt2Slice))
+
+	if !reflect.DeepEqual(qtSlice, qt2Slice) {
+		t.Fatal("Error when serializing quadtree to array and back")
 	}
 
 	outPathImage := "./out_serde.png"
