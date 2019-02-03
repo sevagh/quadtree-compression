@@ -2,15 +2,12 @@ package main
 
 import (
 	"encoding/gob"
-	"image/color"
 	"os"
 )
 
-func init() {
-	gob.Register(color.RGBA64{})
-}
-
 func (q *QuadTree) SerializeToFile(path string) error {
+	q.Prune()
+
 	qFile, err := os.Create(path)
 	if err != nil {
 		return err

@@ -2,7 +2,6 @@ package main
 
 import (
 	"image"
-	colorlib "image/color"
 	"image/png"
 	"os"
 )
@@ -26,21 +25,21 @@ func (q *QuadTree) ToImage() image.Image {
 
 	for y := 0; y < q.Height; y++ {
 		for x := 0; x < q.Width; x++ {
-			img.Set(x, y, q.getPixel(x, y))
+			img.Set(x, y, UnpackColor(q.getPixel(x, y)))
 		}
 	}
 
 	return img
 }
 
-func (q *QuadTree) getPixel(x, y int) colorlib.Color {
+func (q *QuadTree) getPixel(x, y int) PackedRGB {
 	if q.Root != nil {
 		return q.Root.getPixel(x, y, q.Width, q.Height)
 	}
-	return colorlib.RGBA{}
+	return 0
 }
 
-func (qn *QuadTreeNode) getPixel(x, y, xCoord, yCoord int) colorlib.Color {
+func (qn *QuadTreeNode) getPixel(x, y, xCoord, yCoord int) PackedRGB {
 	if qn.NW != nil && x < xCoord/2 && y < yCoord/2 {
 		return qn.NW.getPixel(x, y, xCoord/2, yCoord/2)
 	}

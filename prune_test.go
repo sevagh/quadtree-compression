@@ -9,16 +9,16 @@ func TestPruneModifiesQuadTreeObject(t *testing.T) {
 	qt := QuadTree{}
 
 	qnNE := QuadTreeNode{}
-	qnNE.Color = color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	qnNE.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qnNW := QuadTreeNode{}
-	qnNW.Color = color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	qnNW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qnSE := QuadTreeNode{}
-	qnSE.Color = color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	qnSE.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qnSW := QuadTreeNode{}
-	qnSW.Color = color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	qnSW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qn := QuadTreeNode{}
 	qn.NE = &qnNE
@@ -26,7 +26,7 @@ func TestPruneModifiesQuadTreeObject(t *testing.T) {
 	qn.SE = &qnSE
 	qn.SW = &qnSW
 
-	qn.Color = color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	qn.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qt.Root = &qn
 	qt.Height = 4
@@ -71,7 +71,7 @@ func TestPruneModifiesQuadTreeObject(t *testing.T) {
 		t.Errorf("Expected prune step to eliminate children")
 	}
 
-	expectedColor := color.RGBA{R: 255, G: 0, B: 0, A: 0}
+	expectedColor := PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 	if qt.Root.Color != expectedColor {
 		t.Errorf("Expected prune color to be R255")
 	}

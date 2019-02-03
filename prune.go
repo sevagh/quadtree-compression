@@ -25,7 +25,7 @@ func (q *QuadTreeNode) prune() {
 // stack recursion - essentially a DFS of sorts
 func (q *QuadTreeNode) canPrune(parent *QuadTreeNode) bool {
 	if q.NE == nil || q.NW == nil || q.SE == nil || q.SW == nil { // leaf node
-		colorDist := CIE76(parent.Color, q.Color)
+		colorDist := CIE76(UnpackColor(parent.Color), UnpackColor(q.Color))
 
 		// can prune if the LAB CIE76 is under the Just Noticeable Difference threshold
 		return colorDist <= 2.3

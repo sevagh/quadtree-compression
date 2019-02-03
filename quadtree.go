@@ -11,7 +11,7 @@ type QuadTreeNode struct {
 	NE    *QuadTreeNode
 	SE    *QuadTreeNode
 	SW    *QuadTreeNode
-	Color colorlib.Color
+	Color PackedRGB
 }
 
 type QuadTree struct {
@@ -20,7 +20,7 @@ type QuadTree struct {
 	Width  int
 }
 
-func NewQuadTreeNode(color colorlib.Color) QuadTreeNode {
+func NewQuadTreeNode(color PackedRGB) QuadTreeNode {
 	return QuadTreeNode{Color: color}
 }
 
@@ -49,7 +49,7 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 	}
 
 	if w == 1 && h == 1 {
-		qn := NewQuadTreeNode((*img).At(x, y))
+		qn := NewQuadTreeNode(PackColor((*img).At(x, y)))
 		return &qn
 	}
 
@@ -66,28 +66,28 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 		var blue uint32
 		var alpha uint32
 
-		red_, green_, blue_, alpha_ := qn.NW.Color.RGBA()
+		red_, green_, blue_, alpha_ := UnpackColor(qn.NW.Color).RGBA()
 
 		red += red_
 		green += green_
 		blue += blue_
 		alpha += alpha_
 
-		red_, green_, blue_, alpha_ = qn.NE.Color.RGBA()
+		red_, green_, blue_, alpha_ = UnpackColor(qn.NE.Color).RGBA()
 
 		red += red_
 		green += green_
 		blue += blue_
 		alpha += alpha_
 
-		red_, green_, blue_, alpha_ = qn.SE.Color.RGBA()
+		red_, green_, blue_, alpha_ = UnpackColor(qn.SE.Color).RGBA()
 
 		red += red_
 		green += green_
 		blue += blue_
 		alpha += alpha_
 
-		red_, green_, blue_, alpha_ = qn.SW.Color.RGBA()
+		red_, green_, blue_, alpha_ = UnpackColor(qn.SW.Color).RGBA()
 
 		red += red_
 		green += green_
@@ -99,7 +99,7 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 		blue /= 4
 		alpha /= 4
 
-		qn.Color = colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)}
+		qn.Color = PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
 	}
 
 	return &qn

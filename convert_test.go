@@ -26,16 +26,16 @@ func TestCreateFakeImage(t *testing.T) {
 	qt := QuadTree{}
 
 	qnNE := QuadTreeNode{}
-	qnNE.Color = color.RGBA{R: 0, G: 0, B: 0, A: 255}
+	qnNE.Color = PackColor(color.RGBA{R: 0, G: 0, B: 0, A: 255})
 
 	qnNW := QuadTreeNode{}
-	qnNW.Color = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	qnNW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 255})
 
 	qnSE := QuadTreeNode{}
-	qnSE.Color = color.RGBA{R: 0, G: 255, B: 0, A: 255}
+	qnSE.Color = PackColor(color.RGBA{R: 0, G: 255, B: 0, A: 255})
 
 	qnSW := QuadTreeNode{}
-	qnSW.Color = color.RGBA{R: 0, G: 0, B: 255, A: 255}
+	qnSW.Color = PackColor(color.RGBA{R: 0, G: 0, B: 255, A: 255})
 
 	qn := QuadTreeNode{}
 	qn.NE = &qnNE
@@ -43,7 +43,7 @@ func TestCreateFakeImage(t *testing.T) {
 	qn.SE = &qnSE
 	qn.SW = &qnSW
 
-	qn.Color = color.RGBA{R: 63, G: 63, B: 63, A: 255}
+	qn.Color = PackColor(color.RGBA{R: 63, G: 63, B: 63, A: 255})
 
 	qt.Root = &qn
 	qt.Height = 10
