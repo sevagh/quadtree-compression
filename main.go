@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/sevagh/quadtree-compression"
 	"image"
 	"image/color/palette"
 	"image/draw"
@@ -17,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	qt, err := quadtree_compression.BuildQuadTree(os.Args[1])
+	qt, err := BuildQuadTree(os.Args[1])
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package quadtree_compression
+package main
 
 import (
 	"image/color"

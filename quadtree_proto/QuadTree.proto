@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package quadtree_proto;
-
-message ImageQuadtree {
-	repeated fixed64 data = 1 [packed=true];
-}

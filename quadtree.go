@@ -1,4 +1,4 @@
-package quadtree_compression
+package main
 
 import (
 	"image"
@@ -104,42 +104,4 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 	}
 
 	return &qn
-}
-
-func (q *QuadTree) Leaves() int {
-	return q.Root.leaves()
-}
-
-func (q *QuadTreeNode) leaves() int {
-	leaves := 1
-	if q.NE != nil { //not a leaf node
-		leaves += q.NE.leaves()
-		leaves += q.NW.leaves()
-		leaves += q.SE.leaves()
-		leaves += q.SE.leaves()
-	}
-	return leaves
-}
-
-func (q *QuadTree) ReduceToLevel(level int) {
-	q.Root.reduceToLevel(0, level)
-}
-
-func (q *QuadTreeNode) reduceToLevel(level, maxLevel int) {
-	level++
-	if level >= maxLevel {
-		q.NE = nil
-		q.NW = nil
-		q.SW = nil
-		q.SE = nil
-		return
-	}
-	if q.NE != nil {
-		q.NE.reduceToLevel(level, maxLevel)
-		q.NW.reduceToLevel(level, maxLevel)
-		q.SE.reduceToLevel(level, maxLevel)
-		q.SW.reduceToLevel(level, maxLevel)
-	}
-	// leaf, return
-	return
 }

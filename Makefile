@@ -1,7 +1,6 @@
-proto:
-	protoc --go_out=quadtree_proto --proto_path=quadtree_proto QuadTree.proto
+all: build
 
-test: proto
+test:
 	go test -v ./...
 
 fmt:
@@ -10,11 +9,7 @@ fmt:
 build:
 	go build ./
 
-gif_demo:
-	@mkdir -p bin/
-	go build -o bin/gif_demo ./gif_demo/
-
 clean:
 	@rm -rf *.png *.quadtree *.gif
 
-.PHONY: proto test fmt clean build gif_demo
+.PHONY: proto test fmt clean build
