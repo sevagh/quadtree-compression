@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	pImages := []*image.Paletted{}
+	outGif := &gif.GIF{}
 
 	for i := 1; i < levelsOfQuality; i++ {
 		img, maxAchieved := qt.ToImage(i)
@@ -35,23 +35,23 @@ func main() {
 		pImg := image.NewPaletted(img.Bounds(), palette.Plan9)
 		draw.Draw(pImg, pImg.Rect, img, img.Bounds().Min, draw.Over)
 
-		pImages = append(pImages, pImg)
+		outGif.Image = append(outGif.Image, pImg)
+		outGif.Delay = append(outGif.Delay, 50)
 
 		if maxAchieved {
 			break
 		}
 	}
 
-	createGif(os.Args[3], pImages)
+	createGif(os.Args[3], outGif)
 }
 
-func createGif(outPath string, images []*image.Paletted) {
+func createGif(outPath string, outGif *gif.GIF) {
 	f, err := os.Create(outPath)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
 
-	anim := gif.GIF{Delay: []int{1}, Image: images}
-	gif.EncodeAll(f, &anim)
+	gif.EncodeAll(f, outGif)
 }
