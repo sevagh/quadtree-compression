@@ -1,4 +1,4 @@
-package main
+package quadtree_compression
 
 func (q *QuadTree) Prune() {
 	q.Root.prune()

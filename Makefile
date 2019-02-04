@@ -10,7 +10,11 @@ fmt:
 build:
 	go build ./
 
-clean:
-	@rm -rf *.png *.quadtree quadtree-compression
+gif_demo:
+	@mkdir -p bin/
+	go build -o bin/gif_demo ./gif_demo/
 
-.PHONY: proto test fmt clean build
+clean:
+	@rm -rf *.png *.quadtree *.gif
+
+.PHONY: proto test fmt clean build gif_demo

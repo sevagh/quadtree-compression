@@ -1,3 +1,4 @@
-quadtree-compression
 /*.png
 /*.quadtree
+bin/
+/*.gif

@@ -1,6 +1,7 @@
-package main
+package quadtree_compression
 
 import (
+	"fmt"
 	"image/color"
 	"testing"
 )
@@ -14,7 +15,8 @@ func TestCreateImageRoundTripThroughQuadTree(t *testing.T) {
 		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
 	}
 
-	outErr := WriteImage(qt.ToImage(), outPath)
+	img, _ := qt.ToImage(-1)
+	outErr := WriteImage(img, outPath)
 	if outErr != nil {
 		t.Fatalf("Error when converting quadtree to image: %+v", err)
 	}
@@ -49,8 +51,31 @@ func TestCreateFakeImage(t *testing.T) {
 	qt.Height = 10
 	qt.Width = 10
 
-	err := WriteImage(qt.ToImage(), outPath)
+	img, _ := qt.ToImage(-1)
+	err := WriteImage(img, outPath)
 	if err != nil {
 		t.Fatalf("Error creating fake image '%s': %+v", outPath, err)
+	}
+}
+
+func TestCreateImageProgressiveQuality(t *testing.T) {
+	path := "./samples/jungle.png"
+	outPathFmt := "./out_%d.png"
+
+	qt, err := BuildQuadTree(path)
+	if err != nil {
+		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
+	}
+
+	for i := 1; i < 16; i++ {
+		img, maxAchieved := qt.ToImage(i)
+		outErr := WriteImage(img, fmt.Sprintf(outPathFmt, i))
+		if outErr != nil {
+			t.Fatalf("Error when converting quadtree to image: %+v", err)
+		}
+		if maxAchieved {
+			t.Logf("Already reached max size on the quadtree - won't proceed past level %d", i)
+			break
+		}
 	}
 }

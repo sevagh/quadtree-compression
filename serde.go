@@ -1,4 +1,4 @@
-package main
+package quadtree_compression
 
 import (
 	"bufio"

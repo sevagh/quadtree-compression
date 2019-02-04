@@ -1,4 +1,4 @@
-package main
+package quadtree_compression
 
 import (
 	"image/color"
@@ -91,14 +91,16 @@ func TestPruneQuadTree(t *testing.T) {
 		t.Errorf("Expected a non-nil quad tree")
 	}
 
-	err = WriteImage(qt.ToImage(), regularOut)
+	img, _ := qt.ToImage(-1)
+	err = WriteImage(img, regularOut)
 	if err != nil {
 		t.Fatalf("Error when outputting initial tree to '%s': '%+v", regularOut, err)
 	}
 
 	qt.Prune()
 
-	err = WriteImage(qt.ToImage(), prunedPath)
+	img, _ = qt.ToImage(-1)
+	err = WriteImage(img, prunedPath)
 	if err != nil {
 		t.Fatalf("Error when outputting pruneed tree to '%s': '%+v", prunedPath, err)
 	}

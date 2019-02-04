@@ -1,4 +1,4 @@
-package main
+package quadtree_compression
 
 func (q *QuadTree) TreeToSlice() []uint64 {
 	treeArrRep := make([]uint64, q.Leaves()+2)
