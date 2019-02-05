@@ -10,17 +10,13 @@ type QuadTreeNode struct {
 	NE    *QuadTreeNode
 	SE    *QuadTreeNode
 	SW    *QuadTreeNode
-	Color PackedRGB
+	Color uint64
 }
 
 type QuadTree struct {
 	Root   *QuadTreeNode
 	Height int
 	Width  int
-}
-
-func NewQuadTreeNode(color PackedRGB) QuadTreeNode {
-	return QuadTreeNode{Color: color}
 }
 
 func BuildQuadTree(imageSource string) (*QuadTree, error) {
@@ -35,22 +31,14 @@ func BuildQuadTree(imageSource string) (*QuadTree, error) {
 	qt.Height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
 
 	qt.Root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.Width, qt.Height)
-
-	qt.Prune()
+	qt.Root.prune()
 
 	return &qt, nil
 }
 
 func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
-	if w == 0 {
-		w = 1
-	}
-	if h == 0 {
-		h = 1
-	}
-
-	if w == 1 && h == 1 {
-		qn := NewQuadTreeNode(PackColor((*img).At(x, y)))
+	if w == 0 && h == 0 {
+		qn := QuadTreeNode{Color: InterleaveColor((*img).At(x, y))}
 		return &qn
 	}
 
@@ -67,41 +55,48 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 		var blue uint32
 		var alpha uint32
 
-		red_, green_, blue_, alpha_ := UnpackColor(qn.NW.Color).RGBA()
-
-		red += red_
-		green += green_
-		blue += blue_
-		alpha += alpha_
-
-		red_, green_, blue_, alpha_ = UnpackColor(qn.NE.Color).RGBA()
-
-		red += red_
-		green += green_
-		blue += blue_
-		alpha += alpha_
-
-		red_, green_, blue_, alpha_ = UnpackColor(qn.SE.Color).RGBA()
-
-		red += red_
-		green += green_
-		blue += blue_
-		alpha += alpha_
-
-		red_, green_, blue_, alpha_ = UnpackColor(qn.SW.Color).RGBA()
-
-		red += red_
-		green += green_
-		blue += blue_
-		alpha += alpha_
+		for _, child := range []*QuadTreeNode{qn.NE, qn.NW, qn.SE, qn.SW} {
+			red_, green_, blue_, alpha_ := DeinterleaveZOrderRGB(child.Color).RGBA()
+			red += red_
+			green += green_
+			blue += blue_
+			alpha += alpha_
+		}
 
 		red /= 4
 		green /= 4
 		blue /= 4
 		alpha /= 4
 
-		qn.Color = PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
+		qn.Color = InterleaveColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
 	}
 
 	return &qn
+}
+
+func (q *QuadTreeNode) prune() {
+	if q.NE == nil && q.NW == nil && q.SE == nil && q.SW == nil {
+		return
+	}
+
+	if q.NE.canPrune(q) && q.NW.canPrune(q) && q.SE.canPrune(q) && q.SW.canPrune(q) {
+		q.NE = nil
+		q.NW = nil
+		q.SE = nil
+		q.SW = nil
+	} else {
+		q.NE.prune()
+		q.NW.prune()
+		q.SE.prune()
+		q.SW.prune()
+	}
+}
+
+// stack recursion - essentially a DFS of sorts
+func (q *QuadTreeNode) canPrune(parent *QuadTreeNode) bool {
+	if q.NE == nil { // leaf node
+		return CIE76(parent.Color, q.Color) <= 2.3
+	}
+
+	return q.NE.canPrune(parent) && q.NW.canPrune(parent) && q.SE.canPrune(parent) && q.SW.canPrune(parent)
 }

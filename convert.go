@@ -2,9 +2,25 @@ package main
 
 import (
 	"image"
-	"image/png"
+	_ "image/jpeg"
+	png "image/png"
 	"os"
 )
+
+func LoadImage(path string) (*image.Image, error) {
+	imgF, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer imgF.Close()
+
+	imgRaw, _, err := image.Decode(imgF)
+	if err != nil {
+		return nil, err
+	}
+
+	return &imgRaw, nil
+}
 
 func WriteImage(img image.Image, imgPath string) error {
 	f, err := os.Create(imgPath)
@@ -24,26 +40,26 @@ func (q *QuadTree) ToImage(level int) (image.Image, bool) {
 	img := image.NewNRGBA(image.Rect(0, 0, q.Width, q.Height))
 
 	var maxQualityAchieved bool
-	var pixColor PackedRGB
+	var pixColor uint64
 
 	for y := 0; y < q.Height; y++ {
 		for x := 0; x < q.Width; x++ {
 			pixColor, maxQualityAchieved = q.getPixel(x, y, level)
-			img.Set(x, y, UnpackColor(pixColor))
+			img.Set(x, y, DeinterleaveZOrderRGB(pixColor))
 		}
 	}
 
 	return img, maxQualityAchieved
 }
 
-func (q *QuadTree) getPixel(x, y, level int) (PackedRGB, bool) {
+func (q *QuadTree) getPixel(x, y, level int) (uint64, bool) {
 	if q.Root != nil {
 		return q.Root.getPixel(x, y, q.Width, q.Height, 0, level)
 	}
 	return 0, false
 }
 
-func (qn *QuadTreeNode) getPixel(x, y, xCoord, yCoord, level, maxLevel int) (PackedRGB, bool) {
+func (qn *QuadTreeNode) getPixel(x, y, xCoord, yCoord, level, maxLevel int) (uint64, bool) {
 	level += 1
 	if maxLevel != -1 && level >= maxLevel {
 		return qn.Color, false

@@ -20,20 +20,10 @@ type xyz struct {
 	z float64
 }
 
-// by all accounts a poor measure of the "closeness" of colors - included for posterity
-func EuclidianDistance(color1, color2 color.Color) float64 {
-	R1, G1, B1, _ := color1.RGBA()
-	R2, G2, B2, _ := color2.RGBA()
-
-	return math.Pow(float64(R2-R1), 2) +
-		math.Pow(float64(G2-G1), 2) +
-		math.Pow(float64(B2-B1), 2)
-}
-
 //  \Delta E_{ab}^{*}\approx 2.3 corresponds to a JND (just noticeable difference).[6]
-func CIE76(color1, color2 color.Color) float64 {
-	lab1 := rgbToLab(color1)
-	lab2 := rgbToLab(color2)
+func CIE76(color1, color2 uint64) float64 {
+	lab1 := rgbToLab(DeinterleaveZOrderRGB(color1))
+	lab2 := rgbToLab(DeinterleaveZOrderRGB(color2))
 
 	deltaE := math.Sqrt(
 		math.Pow(lab2.l-lab1.l, 2) +

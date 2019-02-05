@@ -6,6 +6,27 @@ import (
 	"testing"
 )
 
+func TestLoadPngImage(t *testing.T) {
+	path := "./samples/jungle.png"
+	helper(path, t)
+}
+
+func TestLoadJpegImage(t *testing.T) {
+	path := "./samples/jungle.jpg"
+	helper(path, t)
+}
+
+func helper(path string, t *testing.T) {
+	img, err := LoadImage(path)
+	if err != nil {
+		t.Fatalf("Error when loading path '%s': %+v", path, err)
+	}
+
+	if img == nil {
+		t.Errorf("Expected valid object, got nil")
+	}
+}
+
 func TestCreateImageRoundTripThroughQuadTree(t *testing.T) {
 	path := "./samples/jungle.png"
 	outPath := "./out.png"
@@ -28,16 +49,16 @@ func TestCreateFakeImage(t *testing.T) {
 	qt := QuadTree{}
 
 	qnNE := QuadTreeNode{}
-	qnNE.Color = PackColor(color.RGBA{R: 0, G: 0, B: 0, A: 255})
+	qnNE.Color = InterleaveColor(color.RGBA{R: 0, G: 0, B: 0, A: 255})
 
 	qnNW := QuadTreeNode{}
-	qnNW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	qnNW.Color = InterleaveColor(color.RGBA{R: 255, G: 0, B: 0, A: 255})
 
 	qnSE := QuadTreeNode{}
-	qnSE.Color = PackColor(color.RGBA{R: 0, G: 255, B: 0, A: 255})
+	qnSE.Color = InterleaveColor(color.RGBA{R: 0, G: 255, B: 0, A: 255})
 
 	qnSW := QuadTreeNode{}
-	qnSW.Color = PackColor(color.RGBA{R: 0, G: 0, B: 255, A: 255})
+	qnSW.Color = InterleaveColor(color.RGBA{R: 0, G: 0, B: 255, A: 255})
 
 	qn := QuadTreeNode{}
 	qn.NE = &qnNE
@@ -45,7 +66,7 @@ func TestCreateFakeImage(t *testing.T) {
 	qn.SE = &qnSE
 	qn.SW = &qnSW
 
-	qn.Color = PackColor(color.RGBA{R: 63, G: 63, B: 63, A: 255})
+	qn.Color = InterleaveColor(color.RGBA{R: 63, G: 63, B: 63, A: 255})
 
 	qt.Root = &qn
 	qt.Height = 10
