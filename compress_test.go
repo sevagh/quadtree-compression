@@ -36,7 +36,7 @@ func TestCreateImageRoundTripThroughQuadTree(t *testing.T) {
 		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
 	}
 
-	img, _ := qt.ToImage(&ArtOpts{})
+	img := qt.ToImage(0)
 	outErr := WriteImage(img, outPath)
 	if outErr != nil {
 		t.Fatalf("Error when converting quadtree to image: %+v", err)
@@ -72,7 +72,7 @@ func TestCreateFakeImage(t *testing.T) {
 	qt.Height = 10
 	qt.Width = 10
 
-	img, _ := qt.ToImage(&ArtOpts{})
+	img := qt.ToImage(0)
 	err := WriteImage(img, outPath)
 	if err != nil {
 		t.Fatalf("Error creating fake image '%s': %+v", outPath, err)
@@ -89,30 +89,10 @@ func TestCreateImageProgressiveQuality(t *testing.T) {
 	}
 
 	for i := 1; i < 16; i++ {
-		img, maxAchieved := qt.ToImage(&ArtOpts{Level: i})
+		img := qt.ToImage(i)
 		outErr := WriteImage(img, fmt.Sprintf(outPathFmt, i))
 		if outErr != nil {
 			t.Fatalf("Error when converting quadtree to image: %+v", err)
 		}
-		if maxAchieved {
-			t.Logf("Already reached max size on the quadtree - won't proceed past level %d", i)
-			break
-		}
-	}
-}
-
-func TestCreateImageInverted(t *testing.T) {
-	path := "./samples/jungle.png"
-	outPath := "./out_inverted.png"
-
-	qt, err := BuildQuadTree(path)
-	if err != nil {
-		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
-	}
-
-	img, _ := qt.ToImage(&ArtOpts{Invert: true})
-	outErr := WriteImage(img, outPath)
-	if outErr != nil {
-		t.Fatalf("Error when converting quadtree to image: %+v", err)
 	}
 }
