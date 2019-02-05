@@ -2,6 +2,7 @@ all: build
 
 test:
 	go test -v ./...
+	@make clean
 
 fmt:
 	go fmt ./...

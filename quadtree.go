@@ -31,7 +31,6 @@ func BuildQuadTree(imageSource string) (*QuadTree, error) {
 	qt.Height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
 
 	qt.Root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.Width, qt.Height)
-	qt.Root.prune()
 
 	return &qt, nil
 }
@@ -72,31 +71,4 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 	}
 
 	return &qn
-}
-
-func (q *QuadTreeNode) prune() {
-	if q.NE == nil && q.NW == nil && q.SE == nil && q.SW == nil {
-		return
-	}
-
-	if q.NE.canPrune(q) && q.NW.canPrune(q) && q.SE.canPrune(q) && q.SW.canPrune(q) {
-		q.NE = nil
-		q.NW = nil
-		q.SE = nil
-		q.SW = nil
-	} else {
-		q.NE.prune()
-		q.NW.prune()
-		q.SE.prune()
-		q.SW.prune()
-	}
-}
-
-// stack recursion - essentially a DFS of sorts
-func (q *QuadTreeNode) canPrune(parent *QuadTreeNode) bool {
-	if q.NE == nil { // leaf node
-		return CIE76(parent.Color, q.Color) <= 2.3
-	}
-
-	return q.NE.canPrune(parent) && q.NW.canPrune(parent) && q.SE.canPrune(parent) && q.SW.canPrune(parent)
 }
