@@ -1,0 +1,4 @@
+github.com/golang/protobuf v1.3.1 h1:YF8+flBXS5eO826T4nzqPrxfhQThhXl0YzfuUPu4SBg=
+github.com/golang/protobuf v1.3.1/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/rakyll/command v0.0.0-20140411201721-0f2fed130caf h1:GOYc+uoizT73iFTk3det4wFy8jhg3jLEjZ5tVSdyUTY=
+github.com/rakyll/command v0.0.0-20140411201721-0f2fed130caf/go.mod h1:xIEw8zH2kL/G1AyXg16vis73wjgqvAcorGm8/pUVpeI=

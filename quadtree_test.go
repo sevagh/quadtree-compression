@@ -7,7 +7,12 @@ import (
 func TestCreateQuadTreeFromPng(t *testing.T) {
 	path := "./samples/jungle.png"
 
-	qt, err := BuildQuadTree(path)
+	img, err := LoadImage(path)
+	if err != nil {
+		t.Fatalf("Error when loading image path '%s': %+v", path, err)
+	}
+
+	qt, err := BuildQuadTree(img)
 	if err != nil {
 		t.Fatalf("Error when creating quadtree from image '%s': %+v", path, err)
 	}
