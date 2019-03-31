@@ -1,12 +1,15 @@
+proto:
+	protoc --go_out=proto --proto_path=proto QuadTree.proto
+
 all: build
 
-test:
+test: proto
 	go test -v ./...
 
 fmt:
 	go fmt ./...
 
-build:
+build: proto
 	go build ./
 
 clean:

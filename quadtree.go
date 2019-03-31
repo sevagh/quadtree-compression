@@ -10,7 +10,7 @@ type QuadTreeNode struct {
 	NE    *QuadTreeNode
 	SE    *QuadTreeNode
 	SW    *QuadTreeNode
-	Color uint64
+	Color uint32
 }
 
 type QuadTree struct {
@@ -19,25 +19,20 @@ type QuadTree struct {
 	Width  int
 }
 
-func BuildQuadTree(imageSource string) (*QuadTree, error) {
-	img, err := LoadImage(imageSource)
-	if err != nil {
-		return nil, err
-	}
-
+func BuildQuadTree(img image.Image) (*QuadTree, error) {
 	qt := QuadTree{}
 
-	qt.Width = (*img).Bounds().Max.X - 1 - (*img).Bounds().Min.X
-	qt.Height = (*img).Bounds().Max.Y - 1 - (*img).Bounds().Min.Y
+	qt.Width = img.Bounds().Max.X - 1 - img.Bounds().Min.X
+	qt.Height = img.Bounds().Max.Y - 1 - img.Bounds().Min.Y
 
-	qt.Root = buildQuadTree(img, (*img).Bounds().Min.X, (*img).Bounds().Min.Y, qt.Width, qt.Height)
+	qt.Root = buildQuadTree(img, img.Bounds().Min.X, img.Bounds().Min.Y, qt.Width, qt.Height)
 
 	return &qt, nil
 }
 
-func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
+func buildQuadTree(img image.Image, x, y, w, h int) *QuadTreeNode {
 	if w == 0 && h == 0 {
-		qn := QuadTreeNode{Color: InterleaveColor((*img).At(x, y))}
+		qn := QuadTreeNode{Color: PackColor(img.At(x, y))}
 		return &qn
 	}
 
@@ -55,7 +50,7 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 		var alpha uint32
 
 		for _, child := range []*QuadTreeNode{qn.NE, qn.NW, qn.SE, qn.SW} {
-			red_, green_, blue_, alpha_ := DeinterleaveZOrderRGB(child.Color).RGBA()
+			red_, green_, blue_, alpha_ := UnpackColor(child.Color).RGBA()
 			red += red_
 			green += green_
 			blue += blue_
@@ -67,8 +62,23 @@ func buildQuadTree(img *image.Image, x, y, w, h int) *QuadTreeNode {
 		blue /= 4
 		alpha /= 4
 
-		qn.Color = InterleaveColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
+		qn.Color = PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
 	}
 
 	return &qn
+}
+
+func (q *QuadTree) Leaves() int {
+	return q.Root.leaves()
+}
+
+func (q *QuadTreeNode) leaves() int {
+	leaves := 1
+	if q.NE != nil { //not a leaf node
+		leaves += q.NE.leaves()
+		leaves += q.NW.leaves()
+		leaves += q.SE.leaves()
+		leaves += q.SE.leaves()
+	}
+	return leaves
 }
