@@ -35,20 +35,20 @@ func InvDFS(q *QuadTreeNode, index int, storage *[]uint32) {
 	}
 
 	qNE := QuadTreeNode{Color: (*storage)[4*index+1]}
-	q.NE = &qNE
-	InvDFS(q.NE, 4*index+1, storage)
+	q.Quadrant[NE] = &qNE
+	InvDFS(q.Quadrant[NE], 4*index+1, storage)
 
 	qNW := QuadTreeNode{Color: (*storage)[4*index+2]}
-	q.NW = &qNW
-	InvDFS(q.NW, 4*index+2, storage)
+	q.Quadrant[NW] = &qNW
+	InvDFS(q.Quadrant[NW], 4*index+2, storage)
 
 	qSE := QuadTreeNode{Color: (*storage)[4*index+3]}
-	q.SE = &qSE
-	InvDFS(q.SE, 4*index+3, storage)
+	q.Quadrant[SE] = &qSE
+	InvDFS(q.Quadrant[SE], 4*index+3, storage)
 
 	qSW := QuadTreeNode{Color: (*storage)[4*index+4]}
-	q.SW = &qSW
-	InvDFS(q.SW, 4*index+4, storage)
+	q.Quadrant[SW] = &qSW
+	InvDFS(q.Quadrant[SW], 4*index+4, storage)
 }
 
 //store the tree as follows
@@ -57,17 +57,17 @@ func InvDFS(q *QuadTreeNode, index int, storage *[]uint32) {
 // SE: 4*i + 3
 // SW: 4*i + 4
 func DFS(q *QuadTreeNode, index int, storage *[]uint32) {
-	if q.NE != nil { //not a leaf node
-		(*storage)[4*index+1] = uint32(q.NE.Color)
-		DFS(q.NE, 4*index+1, storage)
+	if q.Quadrant[NE] != nil { //not a leaf node
+		(*storage)[4*index+1] = uint32(q.Quadrant[NE].Color)
+		DFS(q.Quadrant[NE], 4*index+1, storage)
 
-		(*storage)[4*index+2] = uint32(q.NW.Color)
-		DFS(q.NW, 4*index+2, storage)
+		(*storage)[4*index+2] = uint32(q.Quadrant[NW].Color)
+		DFS(q.Quadrant[NW], 4*index+2, storage)
 
-		(*storage)[4*index+3] = uint32(q.SE.Color)
-		DFS(q.SE, 4*index+3, storage)
+		(*storage)[4*index+3] = uint32(q.Quadrant[SE].Color)
+		DFS(q.Quadrant[SE], 4*index+3, storage)
 
-		(*storage)[4*index+4] = uint32(q.SW.Color)
-		DFS(q.SW, 4*index+4, storage)
+		(*storage)[4*index+4] = uint32(q.Quadrant[SW].Color)
+		DFS(q.Quadrant[SW], 4*index+4, storage)
 	}
 }

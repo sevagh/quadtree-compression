@@ -22,10 +22,10 @@ func TestQuadTreeObjectToArrayAndBack(t *testing.T) {
 	qnSW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 
 	qn := QuadTreeNode{}
-	qn.NE = &qnNE
-	qn.NW = &qnNW
-	qn.SE = &qnSE
-	qn.SW = &qnSW
+	qn.Quadrant[NE] = &qnNE
+	qn.Quadrant[NW] = &qnNW
+	qn.Quadrant[SE] = &qnSE
+	qn.Quadrant[SW] = &qnSW
 
 	qn.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
 

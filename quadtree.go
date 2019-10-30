@@ -5,12 +5,16 @@ import (
 	colorlib "image/color"
 )
 
+const (
+	NE = iota
+	NW = iota
+	SW = iota
+	SE = iota
+)
+
 type QuadTreeNode struct {
-	NW    *QuadTreeNode
-	NE    *QuadTreeNode
-	SE    *QuadTreeNode
-	SW    *QuadTreeNode
-	Color uint32
+	Quadrant [4]*QuadTreeNode
+	Color    uint32
 }
 
 type QuadTree struct {
@@ -38,18 +42,18 @@ func buildQuadTree(img image.Image, x, y, w, h int) *QuadTreeNode {
 
 	qn := QuadTreeNode{}
 
-	qn.NW = buildQuadTree(img, x, y, w/2, h/2)
-	qn.NE = buildQuadTree(img, x+(w/2), y, w/2, h/2)
-	qn.SW = buildQuadTree(img, x, y+(h/2), w/2, h/2)
-	qn.SE = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
+	qn.Quadrant[NW] = buildQuadTree(img, x, y, w/2, h/2)
+	qn.Quadrant[NE] = buildQuadTree(img, x+(w/2), y, w/2, h/2)
+	qn.Quadrant[SW] = buildQuadTree(img, x, y+(h/2), w/2, h/2)
+	qn.Quadrant[SE] = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
 
-	if qn.NE != nil && qn.NW != nil && qn.SW != nil && qn.SE != nil {
+	if qn.Quadrant[NE] != nil && qn.Quadrant[NW] != nil && qn.Quadrant[SW] != nil && qn.Quadrant[SE] != nil {
 		var red uint32
 		var green uint32
 		var blue uint32
 		var alpha uint32
 
-		for _, child := range []*QuadTreeNode{qn.NE, qn.NW, qn.SE, qn.SW} {
+		for _, child := range []*QuadTreeNode{qn.Quadrant[NE], qn.Quadrant[NW], qn.Quadrant[SE], qn.Quadrant[SW]} {
 			red_, green_, blue_, alpha_ := UnpackColor(child.Color).RGBA()
 			red += red_
 			green += green_
@@ -74,11 +78,11 @@ func (q *QuadTree) Leaves() int {
 
 func (q *QuadTreeNode) leaves() int {
 	leaves := 1
-	if q.NE != nil { //not a leaf node
-		leaves += q.NE.leaves()
-		leaves += q.NW.leaves()
-		leaves += q.SE.leaves()
-		leaves += q.SE.leaves()
+	if q.Quadrant[NE] != nil { //not a leaf node
+		leaves += q.Quadrant[NE].leaves()
+		leaves += q.Quadrant[NW].leaves()
+		leaves += q.Quadrant[SE].leaves()
+		leaves += q.Quadrant[SW].leaves()
 	}
 	return leaves
 }

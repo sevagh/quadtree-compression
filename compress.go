@@ -26,17 +26,17 @@ func (qn *QuadTreeNode) getPixel(x, y, xCoord, yCoord, level, maxLevel int) uint
 	if maxLevel > 0 && level >= maxLevel {
 		return qn.Color
 	}
-	if qn.NW != nil && x < xCoord/2 && y < yCoord/2 {
-		return qn.NW.getPixel(x, y, xCoord/2, yCoord/2, level, maxLevel)
+	if qn.Quadrant[NW] != nil && x < xCoord/2 && y < yCoord/2 {
+		return qn.Quadrant[NW].getPixel(x, y, xCoord/2, yCoord/2, level, maxLevel)
 	}
-	if qn.NE != nil && x >= xCoord/2 && y < yCoord/2 {
-		return qn.NE.getPixel(x-xCoord/2, y, xCoord/2, yCoord/2, level, maxLevel)
+	if qn.Quadrant[NE] != nil && x >= xCoord/2 && y < yCoord/2 {
+		return qn.Quadrant[NE].getPixel(x-xCoord/2, y, xCoord/2, yCoord/2, level, maxLevel)
 	}
-	if qn.SW != nil && x < xCoord/2 && y >= yCoord/2 {
-		return qn.SW.getPixel(x, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
+	if qn.Quadrant[SW] != nil && x < xCoord/2 && y >= yCoord/2 {
+		return qn.Quadrant[SW].getPixel(x, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
 	}
-	if qn.SE != nil && x >= xCoord/2 && y >= yCoord/2 {
-		return qn.SE.getPixel(x-xCoord/2, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
+	if qn.Quadrant[SE] != nil && x >= xCoord/2 && y >= yCoord/2 {
+		return qn.Quadrant[SE].getPixel(x-xCoord/2, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
 	}
 	return qn.Color
 }

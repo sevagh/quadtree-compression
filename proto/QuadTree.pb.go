@@ -3,9 +3,11 @@
 
 package proto
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -16,7 +18,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type ImageQuadtree struct {
 	Data                 []uint32 `protobuf:"fixed32,1,rep,packed,name=data,proto3" json:"data,omitempty"`
@@ -29,16 +31,17 @@ func (m *ImageQuadtree) Reset()         { *m = ImageQuadtree{} }
 func (m *ImageQuadtree) String() string { return proto.CompactTextString(m) }
 func (*ImageQuadtree) ProtoMessage()    {}
 func (*ImageQuadtree) Descriptor() ([]byte, []int) {
-	return fileDescriptor_QuadTree_1aacb8d41643c06a, []int{0}
+	return fileDescriptor_b82718028510fc03, []int{0}
 }
+
 func (m *ImageQuadtree) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ImageQuadtree.Unmarshal(m, b)
 }
 func (m *ImageQuadtree) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ImageQuadtree.Marshal(b, m, deterministic)
 }
-func (dst *ImageQuadtree) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ImageQuadtree.Merge(dst, src)
+func (m *ImageQuadtree) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ImageQuadtree.Merge(m, src)
 }
 func (m *ImageQuadtree) XXX_Size() int {
 	return xxx_messageInfo_ImageQuadtree.Size(m)
@@ -60,9 +63,9 @@ func init() {
 	proto.RegisterType((*ImageQuadtree)(nil), "proto.ImageQuadtree")
 }
 
-func init() { proto.RegisterFile("QuadTree.proto", fileDescriptor_QuadTree_1aacb8d41643c06a) }
+func init() { proto.RegisterFile("QuadTree.proto", fileDescriptor_b82718028510fc03) }
 
-var fileDescriptor_QuadTree_1aacb8d41643c06a = []byte{
+var fileDescriptor_b82718028510fc03 = []byte{
 	// 84 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x0b, 0x2c, 0x4d, 0x4c,
 	0x09, 0x29, 0x4a, 0x4d, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x53, 0x4a, 0xea,
