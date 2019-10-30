@@ -2,3 +2,5 @@
 /*.gif
 quadtree-compression
 /*.quadtree
+*.out
+*.test
