@@ -12,6 +12,8 @@ test:
 bench:
 	go test -run=^a -bench=Bench -v -benchmem
 
+profile:
+	go test -memprofile=memprofile.out -cpuprofile=cpuprofile.out -run=^a -bench=Bench -v -benchmem
 
 build:
 	go build .

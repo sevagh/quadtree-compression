@@ -6,20 +6,31 @@ import (
 	"testing"
 )
 
-func BenchmarkSerDeAndCompressionLow(b *testing.B) {
-	benchHelper(4, b)
+func BenchmarkSerDeAndCompressionSmallImageLowQual(b *testing.B) {
+	benchHelper(4, "./samples/gopher.png", b)
 }
 
-func BenchmarkSerDeAndCompressionMedium(b *testing.B) {
-	benchHelper(8, b)
+func BenchmarkSerDeAndCompressionSmallImageMedQual(b *testing.B) {
+	benchHelper(8, "./samples/gopher.png", b)
 }
 
-func BenchmarkSerDeAndCompressionHigh(b *testing.B) {
-	benchHelper(16, b)
+func BenchmarkSerDeAndCompressionSmallImageHighQual(b *testing.B) {
+	benchHelper(16, "./samples/gopher.png", b)
 }
 
-func benchHelper(maxQuality int, b *testing.B) {
-	path := "./samples/gopher.png"
+func BenchmarkSerDeAndCompressionLargeImageLowQual(b *testing.B) {
+	benchHelper(4, "./samples/jungle.png", b)
+}
+
+func BenchmarkSerDeAndCompressionLargeImageMedQual(b *testing.B) {
+	benchHelper(8, "./samples/jungle.png", b)
+}
+
+func BenchmarkSerDeAndCompressionLargeImageHighQual(b *testing.B) {
+	benchHelper(16, "./samples/jungle.png", b)
+}
+
+func benchHelper(maxQuality int, path string, b *testing.B) {
 	outPathQuadTreeFmt := "./out_%d.quadtree"
 	outPathImageFmt := "./out_serde_%d.png"
 
