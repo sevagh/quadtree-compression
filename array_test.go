@@ -4,30 +4,22 @@ import (
 	"image/color"
 	"reflect"
 	"testing"
+	"github.com/sevagh/k-ary-tree"
 )
 
 func TestQuadTreeObjectToArrayAndBack(t *testing.T) {
 	qt := QuadTree{}
 
-	qnNE := QuadTreeNode{}
-	qnNE.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
+	qnNE := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0}))
+	qnNW := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0}))
+	qnSE := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0}))
+	qnSW := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0}))
 
-	qnNW := QuadTreeNode{}
-	qnNW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
-
-	qnSE := QuadTreeNode{}
-	qnSE.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
-
-	qnSW := QuadTreeNode{}
-	qnSW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
-
-	qn := QuadTreeNode{}
-	qn.Quadrant[NE] = &qnNE
-	qn.Quadrant[NW] = &qnNW
-	qn.Quadrant[SE] = &qnSE
-	qn.Quadrant[SW] = &qnSW
-
-	qn.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0})
+	qn := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 0}))
+	qn.SetNthChild(NE, &qnNE)
+	qn.SetNthChild(NW, &qnNW)
+	qn.SetNthChild(SE, &qnSE)
+	qn.SetNthChild(SW, &qnSW)
 
 	qt.Root = &qn
 	qt.Height = 4

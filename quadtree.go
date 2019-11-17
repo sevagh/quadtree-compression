@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	colorlib "image/color"
+	"github.com/sevagh/k-ary-tree"
 )
 
 const (
@@ -12,13 +13,8 @@ const (
 	SE = iota
 )
 
-type QuadTreeNode struct {
-	Quadrant [4]*QuadTreeNode
-	Color    uint32
-}
-
 type QuadTree struct {
-	Root   *QuadTreeNode
+	Root   *karytree.Node
 	Height int
 	Width  int
 }
@@ -34,27 +30,27 @@ func BuildQuadTree(img image.Image) (*QuadTree, error) {
 	return &qt, nil
 }
 
-func buildQuadTree(img image.Image, x, y, w, h int) *QuadTreeNode {
+func buildQuadTree(img image.Image, x, y, w, h int) *karytree.Node {
+	qn := karytree.NewNode(nil)
+
 	if w == 0 && h == 0 {
-		qn := QuadTreeNode{Color: PackColor(img.At(x, y))}
+		qn.SetKey(PackColor(img.At(x, y)))
 		return &qn
 	}
 
-	qn := QuadTreeNode{}
+	qn.SetNthChild(NW, buildQuadTree(img, x, y, w/2, h/2))
+	qn.SetNthChild(NE, buildQuadTree(img, x+(w/2), y, w/2, h/2))
+	qn.SetNthChild(SW, buildQuadTree(img, x, y+(h/2), w/2, h/2))
+	qn.SetNthChild(SE, buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2))
 
-	qn.Quadrant[NW] = buildQuadTree(img, x, y, w/2, h/2)
-	qn.Quadrant[NE] = buildQuadTree(img, x+(w/2), y, w/2, h/2)
-	qn.Quadrant[SW] = buildQuadTree(img, x, y+(h/2), w/2, h/2)
-	qn.Quadrant[SE] = buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2)
-
-	if qn.Quadrant[NE] != nil && qn.Quadrant[NW] != nil && qn.Quadrant[SW] != nil && qn.Quadrant[SE] != nil {
+	if qn.NthChild(NE) != nil && qn.NthChild(NW) != nil && qn.NthChild(SW) != nil && qn.NthChild(SE) != nil {
 		var red uint32
 		var green uint32
 		var blue uint32
 		var alpha uint32
 
-		for _, child := range []*QuadTreeNode{qn.Quadrant[NE], qn.Quadrant[NW], qn.Quadrant[SE], qn.Quadrant[SW]} {
-			red_, green_, blue_, alpha_ := UnpackColor(child.Color).RGBA()
+		for child := uint16(0); child < uint16(4); child++ {
+			red_, green_, blue_, alpha_ := UnpackColor(qn.NthChild(child).Key().(uint32)).RGBA()
 			red += red_
 			green += green_
 			blue += blue_
@@ -66,23 +62,23 @@ func buildQuadTree(img image.Image, x, y, w, h int) *QuadTreeNode {
 		blue /= 4
 		alpha /= 4
 
-		qn.Color = PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)})
+		qn.SetKey(PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)}))
 	}
 
 	return &qn
 }
 
 func (q *QuadTree) Leaves() int {
-	return q.Root.leaves()
+	return leaves(q.Root)
 }
 
-func (q *QuadTreeNode) leaves() int {
-	leaves := 1
-	if q.Quadrant[NE] != nil { //not a leaf node
-		leaves += q.Quadrant[NE].leaves()
-		leaves += q.Quadrant[NW].leaves()
-		leaves += q.Quadrant[SE].leaves()
-		leaves += q.Quadrant[SW].leaves()
+func leaves(q *karytree.Node) int {
+	leavesCount := 1
+	if q.NthChild(NE) != nil { //not a leaf node
+		leavesCount += leaves(q.NthChild(NE))
+		leavesCount += leaves(q.NthChild(NW))
+		leavesCount += leaves(q.NthChild(SE))
+		leavesCount += leaves(q.NthChild(SW))
 	}
-	return leaves
+	return leavesCount
 }

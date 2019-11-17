@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"testing"
+	"github.com/sevagh/k-ary-tree"
 )
 
 func TestLoadPngImage(t *testing.T) {
@@ -52,25 +53,17 @@ func TestCreateFakeImage(t *testing.T) {
 
 	qt := QuadTree{}
 
-	qnNE := QuadTreeNode{}
-	qnNE.Color = PackColor(color.RGBA{R: 0, G: 0, B: 0, A: 255})
+	qnNE := karytree.NewNode(PackColor(color.RGBA{R: 0, G: 0, B: 0, A: 255}))
+	qnNW := karytree.NewNode(PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
+	qnSE := karytree.NewNode(PackColor(color.RGBA{R: 0, G: 255, B: 0, A: 255}))
+	qnSW := karytree.NewNode(PackColor(color.RGBA{R: 0, G: 0, B: 255, A: 255}))
 
-	qnNW := QuadTreeNode{}
-	qnNW.Color = PackColor(color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	qn := karytree.NewNode(PackColor(color.RGBA{R: 63, G: 63, B: 63, A: 255}))
 
-	qnSE := QuadTreeNode{}
-	qnSE.Color = PackColor(color.RGBA{R: 0, G: 255, B: 0, A: 255})
-
-	qnSW := QuadTreeNode{}
-	qnSW.Color = PackColor(color.RGBA{R: 0, G: 0, B: 255, A: 255})
-
-	qn := QuadTreeNode{}
-	qn.Quadrant[NE] = &qnNE
-	qn.Quadrant[NW] = &qnNW
-	qn.Quadrant[SE] = &qnSE
-	qn.Quadrant[SW] = &qnSW
-
-	qn.Color = PackColor(color.RGBA{R: 63, G: 63, B: 63, A: 255})
+	qn.SetNthChild(NE, &qnNE)
+	qn.SetNthChild(NW, &qnNW)
+	qn.SetNthChild(SE, &qnSE)
+	qn.SetNthChild(SW, &qnSW)
 
 	qt.Root = &qn
 	qt.Height = 10
