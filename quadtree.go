@@ -3,7 +3,8 @@ package main
 import (
 	"image"
 	colorlib "image/color"
-	"github.com/sevagh/k-ary-tree"
+
+	"github.com/sevagh/quadtree-compression/k-ary-tree"
 )
 
 const (
@@ -31,7 +32,7 @@ func BuildQuadTree(img image.Image) (*QuadTree, error) {
 }
 
 func buildQuadTree(img image.Image, x, y, w, h int) *karytree.Node {
-	qn := karytree.NewNode(nil)
+	qn := karytree.NewNode(0)
 
 	if w == 0 && h == 0 {
 		qn.SetKey(PackColor(img.At(x, y)))
@@ -49,8 +50,8 @@ func buildQuadTree(img image.Image, x, y, w, h int) *karytree.Node {
 		var blue uint32
 		var alpha uint32
 
-		for child := uint16(0); child < uint16(4); child++ {
-			red_, green_, blue_, alpha_ := UnpackColor(qn.NthChild(child).Key().(uint32)).RGBA()
+		for child := uint(0); child < uint(4); child++ {
+			red_, green_, blue_, alpha_ := UnpackColor(qn.NthChild(child).Key()).RGBA()
 			red += red_
 			green += green_
 			blue += blue_

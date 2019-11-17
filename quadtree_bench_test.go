@@ -19,7 +19,7 @@ func BenchmarkSerDeAndCompressionHigh(b *testing.B) {
 }
 
 func benchHelper(maxQuality int, b *testing.B) {
-	path := "./samples/jungle.png"
+	path := "./samples/gopher.png"
 	outPathQuadTreeFmt := "./out_%d.quadtree"
 	outPathImageFmt := "./out_serde_%d.png"
 

@@ -2,7 +2,8 @@ package main
 
 import (
 	"image"
-	"github.com/sevagh/k-ary-tree"
+
+	"github.com/sevagh/quadtree-compression/k-ary-tree"
 )
 
 func (q *QuadTree) Compress(level int) (*QuadTree, error) {
@@ -27,7 +28,7 @@ func (q *QuadTree) getPixel(x, y, level int) uint32 {
 func getPixel(qn *karytree.Node, x, y, xCoord, yCoord, level, maxLevel int) uint32 {
 	level += 1
 	if maxLevel > 0 && level >= maxLevel {
-		return qn.Key().(uint32)
+		return qn.Key()
 	}
 	if qn.NthChild(NW) != nil && x < xCoord/2 && y < yCoord/2 {
 		return getPixel(qn.NthChild(NW), x, y, xCoord/2, yCoord/2, level, maxLevel)
@@ -41,5 +42,5 @@ func getPixel(qn *karytree.Node, x, y, xCoord, yCoord, level, maxLevel int) uint
 	if qn.NthChild(SE) != nil && x >= xCoord/2 && y >= yCoord/2 {
 		return getPixel(qn.NthChild(SE), x-xCoord/2, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
 	}
-	return qn.Key().(uint32)
+	return qn.Key()
 }

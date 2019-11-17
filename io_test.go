@@ -3,7 +3,8 @@ package main
 import (
 	"image/color"
 	"testing"
-	"github.com/sevagh/k-ary-tree"
+
+	"github.com/sevagh/quadtree-compression/k-ary-tree"
 )
 
 func TestLoadPngImage(t *testing.T) {

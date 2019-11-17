@@ -4,7 +4,8 @@ import (
 	"image/color"
 	"reflect"
 	"testing"
-	"github.com/sevagh/k-ary-tree"
+
+	"github.com/sevagh/quadtree-compression/k-ary-tree"
 )
 
 func TestQuadTreeObjectToArrayAndBack(t *testing.T) {
