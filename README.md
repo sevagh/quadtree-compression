@@ -1,5 +1,7 @@
 # quadtree-compression
 
+**Check out the [k-ary-tree experiment](https://github.com/sevagh/quadtree-compression/tree/k-ary-tree-experiment)**
+
 Create cool GIFs and lossily compress images with quadtrees:
 
 ![jungle-gif](./samples/jungle.gif)
