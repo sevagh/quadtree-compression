@@ -1,0 +1,638 @@
+package main
+
+/*
+Package karytree implements a recursive k-ary tree data structure.
+
+The children of the tree is a slice of Node pointers.
+
+The slice of children is originally uninitialized, but is filled
+with k nils when any one child is set.
+
+The tree also stores the value of k. The caller is responsible
+for in-range indexing (e.g. don't set a 5th child of a k=3 node).
+*/
+
+import (
+	"image"
+	_ "image/jpeg"
+	png "image/png"
+	"os"
+	"fmt"
+	"bufio"
+	"bytes"
+	"compress/zlib"
+	"io"
+	"flag"
+	"github.com/rakyll/command"
+
+	"github.com/golang/protobuf/proto"
+	quadtree_proto "github.com/sevagh/quadtree-compression/proto"
+	colorlib "image/color"
+	"image/color/palette"
+	"image/gif"
+	"image"
+)
+
+// A Node is a typical recursive tree node, and it represents a tree
+// when it's traversed. The key is for data stored in the node.
+type Node(type T comparable) struct {
+	key         T
+	n           uint
+	firstChild  *Node(T)
+	nextSibling *Node(T)
+}
+
+// NewNode creates a new node data key.
+func NewNode(type T comparable)(key T) Node(T) {
+	n := Node(T){}
+	n.key = key
+	return n
+}
+
+// SetNthChild sets the Nth child. If an existing node is replaced,
+// that node is returned.
+func (k *Node(T)) SetNthChild(n uint, other *Node(T)) *Node(T) {
+	other.n = n
+
+	if k.firstChild == nil {
+		k.firstChild = other
+		return nil
+	}
+
+	if k.firstChild.n == n {
+		// evict
+		ret := k.firstChild
+		other.nextSibling = k.firstChild.nextSibling
+		k.firstChild = other
+		return ret
+	} else if k.firstChild.n > n {
+		// relink
+		other.nextSibling = k.firstChild
+		k.firstChild = other
+		return nil
+	}
+
+	curr := k.firstChild
+	for {
+		if curr.nextSibling == nil {
+			curr.nextSibling = other
+			return nil
+		}
+		if curr.nextSibling.n == n {
+			/* evict the existing nth child
+
+			 *       other
+			 * curr -> nextSibling -> ...
+			 *
+			 * curr -> other -> ..., return nextSibling
+			 */
+			other.nextSibling = curr.nextSibling.nextSibling
+			curr.nextSibling.nextSibling = nil // wipe the rest of the links from the evicted node
+			ret := curr.nextSibling
+			curr.nextSibling = other
+			return ret
+		} else if curr.nextSibling.n > n {
+			/* relink
+			 *       other
+			 * curr -> nextSibling
+			 *
+			 * curr -> other -> nextSibling
+			 */
+			other.nextSibling = curr.nextSibling
+			curr.nextSibling = other
+			return nil
+		}
+		// keep traversing the sibling linkedlist
+		curr = curr.nextSibling
+	}
+}
+
+// NthChild gets the Nth child.
+func (k *Node(T)) NthChild(n uint) *Node(T) {
+	curr := k.firstChild
+	for curr != nil {
+		if curr.n == n {
+			// exact match
+			return curr
+		} else if curr.n > n {
+			// overshoot, nth child doesn't exist
+			return nil
+		}
+		// keep traversing the sibling linkedlist
+		curr = curr.nextSibling
+	}
+
+	return nil
+}
+
+// Key gets the data stored in a node
+func (k *Node(T)) Key() T {
+	return k.key
+}
+
+// SetKey modifies the data in a node
+func (k *Node(T)) SetKey(newKey T) {
+	k.key = newKey
+}
+
+// BFS is a channel-based BFS for tree nodes.
+// Channels are used similar to Python generators.
+// Inspired by https://blog.carlmjohnson.net/post/on-using-go-channels-like-python-generators/
+// Examples of how to use it can be seen in algorithms_test.go
+func BFS(type T comparable)(root *Node(T), quit <-chan struct{}) <-chan *Node(T) {
+	nChan := make(chan *(Node(T)))
+
+	go func() {
+		defer close(nChan)
+		queue := [](*Node(T)){root}
+		var curr *Node(T)
+
+		for len(queue) > 0 {
+			curr, queue = queue[0], queue[1:]
+
+			select {
+			case <-quit:
+				return
+			case nChan <- curr:
+			}
+
+			next := curr.firstChild
+			for next != nil {
+				queue = append(queue, next)
+				next = next.nextSibling
+			}
+		}
+	}()
+
+	return nChan
+}
+
+// Equals does a deep comparison of two tree nodes. The only special
+// behavior is that two nils are considered "equal trees."
+func Equals(type T comparable)(a, b *Node(T)) bool {
+	if a == b {
+		return true
+	}
+
+	if a == nil {
+		return false
+	}
+
+	if b == nil {
+		return false
+	}
+
+	if a.n != b.n || a.Key() != b.Key() {
+		return false
+	}
+
+	nextA := a.firstChild
+	nextB := b.firstChild
+
+	if (nextA != nil && nextB != nil) && nextA.n != nextB.n {
+		return false
+	}
+
+	for {
+		if !Equals(nextA, nextB) {
+			return false
+		}
+
+		if nextA == nil && nextB == nil {
+			return true
+		}
+
+		nextA = nextA.nextSibling
+		nextB = nextB.nextSibling
+	}
+}
+
+func LoadImage(path string) (image.Image, error) {
+	imgF, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer imgF.Close()
+
+	imgRaw, _, err := image.Decode(imgF)
+	if err != nil {
+		return nil, err
+	}
+
+	return imgRaw, nil
+}
+
+func WriteImage(img image.Image, imgPath string) error {
+	f, err := os.Create(imgPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := png.Encode(f, img); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var SCALE_16_TO_8 uint32 = uint32(^uint16(0)) / uint32(^uint8(0))
+
+func PackColor(c colorlib.Color) uint32 {
+	R, G, B, _ := c.RGBA()
+
+	r := uint8(uint32(R) / SCALE_16_TO_8)
+	g := uint8(uint32(G) / SCALE_16_TO_8)
+	b := uint8(uint32(B) / SCALE_16_TO_8)
+
+	var packed uint32
+
+	packed += (uint32(r) & 0x000000FF) |
+		(uint32(g) << 8 & 0x0000FF00) |
+		(uint32(b) << 16 & 0x00FF0000)
+
+	return uint32(packed)
+}
+
+func UnpackColor(p uint32) colorlib.Color {
+	b := uint8((p & 0x00FF0000) >> 16)
+	g := uint8((p & 0x0000FF00) >> 8)
+	r := uint8((p & 0x000000FF))
+
+	R := uint16(uint32(r) * SCALE_16_TO_8)
+	G := uint16(uint32(g) * SCALE_16_TO_8)
+	B := uint16(uint32(b) * SCALE_16_TO_8)
+	A := uint16(0xFFFF)
+
+	return colorlib.RGBA64{R: R, G: G, B: B, A: A}
+}
+
+func (q *QuadTree) TreeToSlice() []uint32 {
+	treeArrRep := make([]uint32, q.Leaves()+2)
+
+	treeArrRep[0] = uint32(q.Root.Key()) //root = index 0
+
+	DFS(q.Root, 0, &treeArrRep)
+
+	treeArrRep[len(treeArrRep)-2] = uint32(q.Width)
+	treeArrRep[len(treeArrRep)-1] = uint32(q.Height)
+
+	return treeArrRep
+}
+
+func SliceToTree(nodes *[]uint32) QuadTree {
+	qt := QuadTree{}
+
+	qt.Height = int((*nodes)[len(*nodes)-1])
+	qt.Width = int((*nodes)[len(*nodes)-2])
+
+	qn := NewNode(0)
+	qn.SetKey((*nodes)[0])
+
+	qt.Root = &qn
+
+	InvDFS(qt.Root, 0, nodes)
+	return qt
+}
+
+func InvDFS(q *Node, index int, storage *[]uint32) {
+	// no more nodes - use 4*index+3 to omit height/width at the end
+	if 4*index+3 >= len(*storage) {
+		return
+	}
+
+	qNE := NewNode((*storage)[4*index+1])
+	q.SetNthChild(NE, &qNE)
+	InvDFS(&qNE, 4*index+1, storage)
+
+	qNW := NewNode((*storage)[4*index+2])
+	q.SetNthChild(NW, &qNW)
+	InvDFS(&qNW, 4*index+2, storage)
+
+	qSE := NewNode((*storage)[4*index+3])
+	q.SetNthChild(SE, &qSE)
+	InvDFS(&qSE, 4*index+3, storage)
+
+	qSW := NewNode((*storage)[4*index+4])
+	q.SetNthChild(SW, &qSW)
+	InvDFS(&qSW, 4*index+4, storage)
+}
+
+//store the tree as follows
+// NE: 4*i + 1
+// NW: 4*i + 2
+// SE: 4*i + 3
+// SW: 4*i + 4
+func DFS(q *Node, index int, storage *[]uint32) {
+	if q.NthChild(NE) != nil { //not a leaf node
+		(*storage)[4*index+1] = uint32(q.NthChild(NE).Key())
+		DFS(q.NthChild(NE), 4*index+1, storage)
+
+		(*storage)[4*index+2] = uint32(q.NthChild(NW).Key())
+		DFS(q.NthChild(NW), 4*index+2, storage)
+
+		(*storage)[4*index+3] = uint32(q.NthChild(SE).Key())
+		DFS(q.NthChild(SE), 4*index+3, storage)
+
+		(*storage)[4*index+4] = uint32(q.NthChild(SW).Key())
+		DFS(q.NthChild(SW), 4*index+4, storage)
+	}
+}
+
+// chose zlib + protobuf from https://eng.uber.com/trip-data-squeeze/
+func (q *QuadTree) SerializeToFile(path string) error {
+	treeSlice := q.TreeToSlice()
+
+	protoObj := quadtree_proto.ImageQuadtree{Data: treeSlice}
+
+	data, err := proto.Marshal(&protoObj)
+	if err != nil {
+		return err
+	}
+
+	var compressedData bytes.Buffer
+	w := zlib.NewWriter(&compressedData)
+	defer w.Close()
+
+	w.Write(data)
+	w.Flush()
+
+	writeFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(writeFile, bufio.NewReader(&compressedData))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadQuadTreeFromFile(path string) (QuadTree, error) {
+	readFile, err := os.Open(path)
+	if err != nil {
+		return QuadTree{}, err
+	}
+
+	r, err := zlib.NewReader(readFile)
+	defer r.Close()
+
+	var protoObj quadtree_proto.ImageQuadtree
+
+	uncompressedData := new(bytes.Buffer)
+	uncompressedData.ReadFrom(r)
+
+	err = proto.Unmarshal(uncompressedData.Bytes(), &protoObj)
+	if err != nil {
+		return QuadTree{}, err
+	}
+
+	q := SliceToTree(&protoObj.Data)
+	return q, nil
+}
+
+const (
+	NE = iota
+	NW = iota
+	SW = iota
+	SE = iota
+)
+
+type QuadTree struct {
+	Root   *Node
+	Height int
+	Width  int
+}
+
+func BuildQuadTree(img image.Image) (*QuadTree, error) {
+	qt := QuadTree{}
+
+	qt.Width = img.Bounds().Max.X - 1 - img.Bounds().Min.X
+	qt.Height = img.Bounds().Max.Y - 1 - img.Bounds().Min.Y
+
+	qt.Root = buildQuadTree(img, img.Bounds().Min.X, img.Bounds().Min.Y, qt.Width, qt.Height)
+
+	return &qt, nil
+}
+
+func buildQuadTree(img image.Image, x, y, w, h int) *Node {
+	qn := NewNode(0)
+
+	if w == 0 && h == 0 {
+		qn.SetKey(PackColor(img.At(x, y)))
+		return &qn
+	}
+
+	qn.SetNthChild(NW, buildQuadTree(img, x, y, w/2, h/2))
+	qn.SetNthChild(NE, buildQuadTree(img, x+(w/2), y, w/2, h/2))
+	qn.SetNthChild(SW, buildQuadTree(img, x, y+(h/2), w/2, h/2))
+	qn.SetNthChild(SE, buildQuadTree(img, x+(w/2), y+(h/2), w/2, h/2))
+
+	if qn.NthChild(NE) != nil && qn.NthChild(NW) != nil && qn.NthChild(SW) != nil && qn.NthChild(SE) != nil {
+		var red uint32
+		var green uint32
+		var blue uint32
+		var alpha uint32
+
+		for child := uint(0); child < uint(4); child++ {
+			red_, green_, blue_, alpha_ := UnpackColor(qn.NthChild(child).Key()).RGBA()
+			red += red_
+			green += green_
+			blue += blue_
+			alpha += alpha_
+		}
+
+		red /= 4
+		green /= 4
+		blue /= 4
+		alpha /= 4
+
+		qn.SetKey(PackColor(colorlib.RGBA64{R: uint16(red), G: uint16(green), B: uint16(blue), A: uint16(alpha)}))
+	}
+
+	return &qn
+}
+
+func (q *QuadTree) Leaves() int {
+	return leaves(q.Root)
+}
+
+func leaves(q *Node) int {
+	leavesCount := 1
+	if q.NthChild(NE) != nil { //not a leaf node
+		leavesCount += leaves(q.NthChild(NE))
+		leavesCount += leaves(q.NthChild(NW))
+		leavesCount += leaves(q.NthChild(SE))
+		leavesCount += leaves(q.NthChild(SW))
+	}
+	return leavesCount
+}
+
+func (q *QuadTree) Compress(level int) (*QuadTree, error) {
+	img := image.NewNRGBA(image.Rect(0, 0, q.Width, q.Height))
+
+	for y := 0; y < q.Height; y++ {
+		for x := 0; x < q.Width; x++ {
+			img.Set(x, y, UnpackColor(q.getPixel(x, y, level)))
+		}
+	}
+
+	return BuildQuadTree(img)
+}
+
+func (q *QuadTree) getPixel(x, y, level int) uint32 {
+	if q.Root != nil {
+		return getPixel(q.Root, x, y, q.Width, q.Height, 0, level)
+	}
+	return 0
+}
+
+func getPixel(qn *Node, x, y, xCoord, yCoord, level, maxLevel int) uint32 {
+	level += 1
+	if maxLevel > 0 && level >= maxLevel {
+		return qn.Key()
+	}
+	if qn.NthChild(NW) != nil && x < xCoord/2 && y < yCoord/2 {
+		return getPixel(qn.NthChild(NW), x, y, xCoord/2, yCoord/2, level, maxLevel)
+	}
+	if qn.NthChild(NE) != nil && x >= xCoord/2 && y < yCoord/2 {
+		return getPixel(qn.NthChild(NE), x-xCoord/2, y, xCoord/2, yCoord/2, level, maxLevel)
+	}
+	if qn.NthChild(SW) != nil && x < xCoord/2 && y >= yCoord/2 {
+		return getPixel(qn.NthChild(SW), x, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
+	}
+	if qn.NthChild(SE) != nil && x >= xCoord/2 && y >= yCoord/2 {
+		return getPixel(qn.NthChild(SE), x-xCoord/2, y-yCoord/2, xCoord/2, yCoord/2, level, maxLevel)
+	}
+	return qn.Key()
+}
+
+type GifCommand struct {
+	qualityFlag *int
+	delayFlag   *int
+}
+
+type CompressCommand struct {
+	qualityFlag *int
+}
+
+type DecompressCommand struct {
+}
+
+func (cmd *GifCommand) Flags(fs *flag.FlagSet) *flag.FlagSet {
+	cmd.qualityFlag = fs.Int("quality", 10, "quadtree depth (more is better quality)")
+	cmd.delayFlag = fs.Int("delayMS", 500, "frame delay in ms")
+	return fs
+}
+
+func (cmd *CompressCommand) Flags(fs *flag.FlagSet) *flag.FlagSet {
+	cmd.qualityFlag = fs.Int("quality", -1, "quadtree depth (more is better quality, -1 is unbounded/max)")
+	return fs
+}
+
+func (cmd *DecompressCommand) Flags(fs *flag.FlagSet) *flag.FlagSet {
+	return fs
+}
+
+func (cmd *GifCommand) Run(args []string) {
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <inpath> <outpath>\n", os.Args[0])
+		os.Exit(0)
+	}
+
+	inPath := args[0]
+	outPath := args[1]
+
+	inImg, err := LoadImage(inPath)
+	if err != nil {
+		panic(err)
+	}
+
+	qt, err := BuildQuadTree(inImg)
+	if err != nil {
+		panic(err)
+	}
+
+	outGif := &gif.GIF{}
+	for i := 1; i < *cmd.qualityFlag; i++ {
+		compressedQ, _ := qt.Compress(i)
+		img := compressedQ.ToImage()
+
+		pImg := image.NewPaletted(img.Bounds(), palette.Plan9)
+		draw.Draw(pImg, pImg.Rect, img, img.Bounds().Min, draw.Over)
+
+		outGif.Image = append(outGif.Image, pImg)
+		outGif.Delay = append(outGif.Delay, *cmd.delayFlag/10)
+	}
+
+	f, err := os.Create(outPath)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	gif.EncodeAll(f, outGif)
+}
+
+func (cmd *CompressCommand) Run(args []string) {
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <inpath> <outpath>\n", os.Args[0])
+		os.Exit(0)
+	}
+
+	inPath := args[0]
+	outPath := args[1]
+
+	inImg, err := LoadImage(inPath)
+	if err != nil {
+		panic(err)
+	}
+
+	qt, err := BuildQuadTree(inImg)
+	if err != nil {
+		panic(err)
+	}
+
+	qt, err = qt.Compress(*cmd.qualityFlag)
+	if err != nil {
+		panic(err)
+	}
+
+	err = qt.SerializeToFile(outPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (cmd *DecompressCommand) Run(args []string) {
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <inpath> <outpath>\n", os.Args[0])
+		os.Exit(0)
+	}
+
+	inPath := args[0]
+	outPath := args[1]
+
+	inQt, err := LoadQuadTreeFromFile(inPath)
+	if err != nil {
+		panic(err)
+	}
+
+	img := inQt.ToImage()
+
+	err = WriteImage(img, outPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	command.On("gif", "generate a gif", &GifCommand{}, []string{})
+	command.On("compress", "compress to .quadtree file", &CompressCommand{}, []string{})
+	command.On("decompress", "decompress .quadtree file", &DecompressCommand{}, []string{})
+
+	command.Parse()
+	command.Run()
+}
