@@ -8,6 +8,12 @@ import (
 	"fmt"
 	"flag"
 	"github.com/rakyll/command"
+	proto "github.com/golang/protobuf/proto"
+	"compress/zlib"
+	"io"
+	"bytes"
+	"bufio"
+	quadtree_proto "github.com/sevagh/quadtree-compression/proto"
 
 	colorlib "image/color"
 	"image/color/palette"
@@ -558,11 +564,88 @@ func (cmd *CompressCommand) Run(args []string) {
 	}
 }
 
+func (cmd *DecompressCommand) Run(args []string) {
+	if len(args) != 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <inpath> <outpath>\n", os.Args[0])
+		os.Exit(0)
+	}
+
+	inPath := args[0]
+	outPath := args[1]
+
+	inQt, err := LoadQuadTreeFromFile(inPath)
+	if err != nil {
+		panic(err)
+	}
+
+	img := inQt.ToImage()
+
+	err = WriteImage(img, outPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
+	fmt.Printf("hello world!\n")
 	command.On("gif", "generate a gif", &GifCommand{}, []string{})
 	command.On("compress", "compress to .quadtree file", &CompressCommand{}, []string{})
 	command.On("decompress", "decompress .quadtree file", &DecompressCommand{}, []string{})
 
 	command.Parse()
 	command.Run()
+}
+
+// chose zlib + protobuf from https://eng.uber.com/trip-data-squeeze/
+func (q *QuadTree) SerializeToFile(path string) error {
+	treeSlice := q.TreeToSlice()
+
+	protoObj := quadtree_proto.ImageQuadtree{Data: treeSlice}
+
+	data, err := proto.Marshal(&protoObj)
+	if err != nil {
+		return err
+	}
+
+	var compressedData bytes.Buffer
+	w := zlib.NewWriter(&compressedData)
+	defer w.Close()
+
+	w.Write(data)
+	w.Flush()
+
+	writeFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(writeFile, bufio.NewReader(&compressedData))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadQuadTreeFromFile(path string) (QuadTree, error) {
+	readFile, err := os.Open(path)
+	if err != nil {
+		return QuadTree{}, err
+	}
+
+	r, err := zlib.NewReader(readFile)
+	defer r.Close()
+
+	var protoObj quadtree_proto.ImageQuadtree
+
+	uncompressedData := new(bytes.Buffer)
+	uncompressedData.ReadFrom(r)
+
+	err = proto.Unmarshal(uncompressedData.Bytes(), &protoObj)
+	if err != nil {
+		return QuadTree{}, err
+	}
+
+	q := SliceToTree(&protoObj.Data)
+	return q, nil
 }
