@@ -1,5 +1,20 @@
 package main
 
+import (
+	"image"
+	_ "image/jpeg"
+	png "image/png"
+	"os"
+	"fmt"
+	"flag"
+	"github.com/rakyll/command"
+
+	colorlib "image/color"
+	"image/color/palette"
+	"image/gif"
+	"image/draw"
+)
+
 /*
 Package karytree implements a recursive k-ary tree data structure.
 
@@ -11,27 +26,6 @@ with k nils when any one child is set.
 The tree also stores the value of k. The caller is responsible
 for in-range indexing (e.g. don't set a 5th child of a k=3 node).
 */
-
-import (
-	"image"
-	_ "image/jpeg"
-	png "image/png"
-	"os"
-	"fmt"
-	"bufio"
-	"bytes"
-	"compress/zlib"
-	"io"
-	"flag"
-	"github.com/rakyll/command"
-
-	"github.com/golang/protobuf/proto"
-	quadtree_proto "github.com/sevagh/quadtree-compression/proto"
-	colorlib "image/color"
-	"image/color/palette"
-	"image/gif"
-	"image"
-)
 
 // A Node is a typical recursive tree node, and it represents a tree
 // when it's traversed. The key is for data stored in the node.
@@ -286,7 +280,7 @@ func SliceToTree(nodes *[]uint32) QuadTree {
 	qt.Height = int((*nodes)[len(*nodes)-1])
 	qt.Width = int((*nodes)[len(*nodes)-2])
 
-	qn := NewNode(0)
+	qn := NewNode(uint32(0))
 	qn.SetKey((*nodes)[0])
 
 	qt.Root = &qn
@@ -295,7 +289,7 @@ func SliceToTree(nodes *[]uint32) QuadTree {
 	return qt
 }
 
-func InvDFS(q *Node, index int, storage *[]uint32) {
+func InvDFS(q *Node(uint32), index int, storage *[]uint32) {
 	// no more nodes - use 4*index+3 to omit height/width at the end
 	if 4*index+3 >= len(*storage) {
 		return
@@ -323,7 +317,7 @@ func InvDFS(q *Node, index int, storage *[]uint32) {
 // NW: 4*i + 2
 // SE: 4*i + 3
 // SW: 4*i + 4
-func DFS(q *Node, index int, storage *[]uint32) {
+func DFS(q *Node(uint32), index int, storage *[]uint32) {
 	if q.NthChild(NE) != nil { //not a leaf node
 		(*storage)[4*index+1] = uint32(q.NthChild(NE).Key())
 		DFS(q.NthChild(NE), 4*index+1, storage)
@@ -339,60 +333,6 @@ func DFS(q *Node, index int, storage *[]uint32) {
 	}
 }
 
-// chose zlib + protobuf from https://eng.uber.com/trip-data-squeeze/
-func (q *QuadTree) SerializeToFile(path string) error {
-	treeSlice := q.TreeToSlice()
-
-	protoObj := quadtree_proto.ImageQuadtree{Data: treeSlice}
-
-	data, err := proto.Marshal(&protoObj)
-	if err != nil {
-		return err
-	}
-
-	var compressedData bytes.Buffer
-	w := zlib.NewWriter(&compressedData)
-	defer w.Close()
-
-	w.Write(data)
-	w.Flush()
-
-	writeFile, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(writeFile, bufio.NewReader(&compressedData))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func LoadQuadTreeFromFile(path string) (QuadTree, error) {
-	readFile, err := os.Open(path)
-	if err != nil {
-		return QuadTree{}, err
-	}
-
-	r, err := zlib.NewReader(readFile)
-	defer r.Close()
-
-	var protoObj quadtree_proto.ImageQuadtree
-
-	uncompressedData := new(bytes.Buffer)
-	uncompressedData.ReadFrom(r)
-
-	err = proto.Unmarshal(uncompressedData.Bytes(), &protoObj)
-	if err != nil {
-		return QuadTree{}, err
-	}
-
-	q := SliceToTree(&protoObj.Data)
-	return q, nil
-}
-
 const (
 	NE = iota
 	NW = iota
@@ -401,9 +341,21 @@ const (
 )
 
 type QuadTree struct {
-	Root   *Node
+	Root   *Node(uint32)
 	Height int
 	Width  int
+}
+
+func (q *QuadTree) ToImage() image.Image {
+    img := image.NewNRGBA(image.Rect(0, 0, q.Width, q.Height))
+
+    for y := 0; y < q.Height; y++ {
+        for x := 0; x < q.Width; x++ {
+            img.Set(x, y, UnpackColor(q.getPixel(x, y, -1)))
+        }
+    }
+
+    return img
 }
 
 func BuildQuadTree(img image.Image) (*QuadTree, error) {
@@ -417,8 +369,8 @@ func BuildQuadTree(img image.Image) (*QuadTree, error) {
 	return &qt, nil
 }
 
-func buildQuadTree(img image.Image, x, y, w, h int) *Node {
-	qn := NewNode(0)
+func buildQuadTree(img image.Image, x, y, w, h int) *Node(uint32) {
+	qn := NewNode(uint32(0))
 
 	if w == 0 && h == 0 {
 		qn.SetKey(PackColor(img.At(x, y)))
@@ -459,7 +411,7 @@ func (q *QuadTree) Leaves() int {
 	return leaves(q.Root)
 }
 
-func leaves(q *Node) int {
+func leaves(q *Node(uint32)) int {
 	leavesCount := 1
 	if q.NthChild(NE) != nil { //not a leaf node
 		leavesCount += leaves(q.NthChild(NE))
@@ -489,7 +441,7 @@ func (q *QuadTree) getPixel(x, y, level int) uint32 {
 	return 0
 }
 
-func getPixel(qn *Node, x, y, xCoord, yCoord, level, maxLevel int) uint32 {
+func getPixel(qn *Node(uint32), x, y, xCoord, yCoord, level, maxLevel int) uint32 {
 	level += 1
 	if maxLevel > 0 && level >= maxLevel {
 		return qn.Key()
@@ -601,28 +553,6 @@ func (cmd *CompressCommand) Run(args []string) {
 	}
 
 	err = qt.SerializeToFile(outPath)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (cmd *DecompressCommand) Run(args []string) {
-	if len(args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] <inpath> <outpath>\n", os.Args[0])
-		os.Exit(0)
-	}
-
-	inPath := args[0]
-	outPath := args[1]
-
-	inQt, err := LoadQuadTreeFromFile(inPath)
-	if err != nil {
-		panic(err)
-	}
-
-	img := inQt.ToImage()
-
-	err = WriteImage(img, outPath)
 	if err != nil {
 		panic(err)
 	}
