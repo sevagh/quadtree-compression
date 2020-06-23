@@ -1,8 +1,10 @@
 # quadtree-compression
 
-**Check out the [k-ary-tree experiment](https://github.com/sevagh/quadtree-compression/tree/k-ary-tree-experiment)**
-
 Create cool GIFs and lossily compress images with quadtrees:
+
+**2020/06/22 update - [k-ary-tree experiment with generics/go2go](https://github.com/sevagh/quadtree-compression/tree/generics-experiment)**
+
+*2019/11/17 update - [k-ary-tree experiment](https://github.com/sevagh/quadtree-compression/tree/k-ary-tree-experiment)*
 
 ![jungle-gif](./samples/jungle.gif)
 
