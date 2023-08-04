@@ -7,8 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/golang/protobuf/proto"
 	quadtree_proto "github.com/sevagh/quadtree-compression/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // chose zlib + protobuf from https://eng.uber.com/trip-data-squeeze/

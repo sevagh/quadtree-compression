@@ -6,8 +6,31 @@ import (
 	"testing"
 )
 
-func BenchmarkSerDeAndCompression(b *testing.B) {
-	path := "./samples/jungle.png"
+func BenchmarkSerDeAndCompressionSmallImageLowQual(b *testing.B) {
+	benchHelper(4, "./samples/gopher.png", b)
+}
+
+func BenchmarkSerDeAndCompressionSmallImageMedQual(b *testing.B) {
+	benchHelper(8, "./samples/gopher.png", b)
+}
+
+func BenchmarkSerDeAndCompressionSmallImageHighQual(b *testing.B) {
+	benchHelper(16, "./samples/gopher.png", b)
+}
+
+func BenchmarkSerDeAndCompressionLargeImageLowQual(b *testing.B) {
+	benchHelper(4, "./samples/jungle.png", b)
+}
+
+func BenchmarkSerDeAndCompressionLargeImageMedQual(b *testing.B) {
+	benchHelper(8, "./samples/jungle.png", b)
+}
+
+func BenchmarkSerDeAndCompressionLargeImageHighQual(b *testing.B) {
+	benchHelper(16, "./samples/jungle.png", b)
+}
+
+func benchHelper(maxQuality int, path string, b *testing.B) {
 	outPathQuadTreeFmt := "./out_%d.quadtree"
 	outPathImageFmt := "./out_serde_%d.png"
 
@@ -22,7 +45,7 @@ func BenchmarkSerDeAndCompression(b *testing.B) {
 	}
 
 	for j := 0; j < b.N; j++ {
-		for i := 16; i >= 1; i-- {
+		for i := maxQuality; i >= 1; i-- {
 			quadTreeOutFile := fmt.Sprintf(outPathQuadTreeFmt, i)
 			quadTreeImageOutFile := fmt.Sprintf(outPathImageFmt, i)
 

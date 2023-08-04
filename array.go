@@ -51,7 +51,7 @@ func InvDFS(q *QuadTreeNode, index int, storage *[]uint32) {
 	InvDFS(q.Quadrant[SW], 4*index+4, storage)
 }
 
-//store the tree as follows
+// store the tree as follows
 // NE: 4*i + 1
 // NW: 4*i + 2
 // SE: 4*i + 3
